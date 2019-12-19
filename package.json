@@ -1,0 +1,29 @@
+{
+  "name": "attendee-tracker",
+  "version": "1.0.0",
+  "description": "Full-stack application to track attendees at events",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jamesqquick/Attendee-Tracker.git"
+  },
+  "author": "@jamesqquick",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jamesqquick/Attendee-Tracker/issues"
+  },
+  "homepage": "https://github.com/jamesqquick/Attendee-Tracker#readme",
+  "dependencies": {
+    "@hapi/joi": "^16.1.8",
+    "@sendgrid/mail": "^6.4.0",
+    "bcrypt": "^3.0.7",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "jsonwebtoken": "^8.5.1",
+    "jwt-decode": "^2.2.0",
+    "mongoose": "^5.8.1"
+  }
+}
