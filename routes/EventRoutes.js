@@ -6,6 +6,7 @@ const Event = mongoose.model('Event');
 routes.post('/', checkLoggedIn, async (req, res) => {
     const user = req.user._id;
     const event = new Event({ ...req.body, user });
+    console.log(event);
     try {
         await event.save();
         return res.send(event);

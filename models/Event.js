@@ -1,5 +1,15 @@
 const mongoose = require('mongoose');
 
+const attendeeSchema = new mongoose.Schema({
+    name: {
+        type: String,
+        required: true
+    },
+    email: {
+        type: String,
+        required: true
+    }
+});
 const eventSchema = new mongoose.Schema({
     title: {
         type: String,
@@ -20,17 +30,10 @@ const eventSchema = new mongoose.Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
+    },
+    attendees: {
+        type: [attendeeSchema]
     }
-    // phone: {
-    //     type: String,
-    //     validate: {
-    //         validator: function (v) {
-    //             return /\d{11}/.test(v);
-    //         },
-    //         message: (props) => `${props.value} is not a valid phone number!`
-    //     },
-    //     required: [true, 'Phone number is required']
-    // },
 });
 
 module.exports = mongoose.model('Event', eventSchema);

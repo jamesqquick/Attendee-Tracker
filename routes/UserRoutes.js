@@ -18,10 +18,8 @@ router.post('/register', async (req, res) => {
     let user = await User.findOne({ email: req.body.email });
     if (user) return res.status(400).send({ msg: 'User already registered.' });
     user = new User({
-        username: req.body.username,
         password: req.body.password,
-        email: req.body.email,
-        phone: req.body.phone
+        email: req.body.email
     });
 
     user.password = await bcrypt.hash(user.password, 10);
@@ -36,7 +34,6 @@ router.post('/register', async (req, res) => {
     const token = user.generateAuthToken();
     res.header('x-auth-token', token).send({
         _id: user._id,
-        username: user.username,
         email: user.email,
         token
     });
@@ -45,12 +42,12 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) {
-        return res.status(400).send({ msg: 'Invalid username or password' });
+        return res.status(400).send({ msg: 'Invalid email or password' });
     }
 
     const user = await User.findOne({ email });
     if (!user) {
-        return res.status(400).send({ msg: 'Invalid username or password' });
+        return res.status(400).send({ msg: 'Invalid email or password' });
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
@@ -60,9 +57,7 @@ router.post('/login', async (req, res) => {
 
     const token = user.generateAuthToken();
     res.header('x-auth-token', token).send({
-        username: user.username,
         email: user.email,
-        phone: user.phone,
         token
     });
 });
