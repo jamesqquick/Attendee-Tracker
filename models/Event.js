@@ -1,15 +1,4 @@
 const mongoose = require('mongoose');
-
-const attendeeSchema = new mongoose.Schema({
-    name: {
-        type: String,
-        required: true
-    },
-    email: {
-        type: String,
-        required: true
-    }
-});
 const eventSchema = new mongoose.Schema({
     title: {
         type: String,
@@ -28,11 +17,18 @@ const eventSchema = new mongoose.Schema({
         required: true
     },
     user: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
+        //not required since we will let guests register also
+        type: String,
+        required: false
     },
     attendees: {
-        type: [attendeeSchema]
+        type: [
+            {
+                name: String,
+                email: String,
+                _id: { type: String, required: false }
+            }
+        ]
     }
 });
 

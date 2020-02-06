@@ -1,10 +1,15 @@
 const routes = require('express').Router();
-const { checkLoggedIn } = require('../middleware/Auth');
 const mongoose = require('mongoose');
 const Event = mongoose.model('Event');
+const { checkJwt } = require('../middleware/auth');
 
-routes.post('/', checkLoggedIn, async (req, res) => {
-    const user = req.user._id;
+routes.post('/', checkJwt, async (req, res) => {
+    //console.log(req.user);
+    const user = req.user.sub;
+    console.log(req.body);
+    //console.log(res.json(req.body));
+
+    const body = req.body;
     const event = new Event({ ...req.body, user });
     console.log(event);
     try {
@@ -16,10 +21,10 @@ routes.post('/', checkLoggedIn, async (req, res) => {
     }
 });
 
-routes.get('/', checkLoggedIn, async (req, res) => {
-    const user = req.user._id;
+routes.get('/', async (req, res) => {
+    //TODO: search based on user query in query param
     try {
-        const events = await Event.find({ user });
+        const events = await Event.find(); //TODO: limit to 20
         return res.send(events);
     } catch (err) {
         console.error(err);
@@ -27,29 +32,33 @@ routes.get('/', checkLoggedIn, async (req, res) => {
     }
 });
 
-routes.get('/:id', checkLoggedIn, async (req, res) => {
+routes.get('/myEvents', checkJwt, async (req, res) => {
+    const user = req.user.sub;
+    try {
+        const events = await Event.find({ user });
+        return res.send(events);
+    } catch (err) {
+        return res.status(400).send({ msg: 'Failed to get event' });
+    }
+});
+
+routes.get('/:id', async (req, res) => {
     const id = req.params.id;
     try {
         const event = await Event.findById(id);
-        const userId = req.user._id;
-
-        if (event.user != userId) {
-            return res.status(403).send({ msg: 'Unauthorized' });
-        }
-
         return res.send(event);
     } catch (err) {
         return res.status(400).send({ msg: 'Failed to get event' });
     }
 });
 
-routes.put('/:id', checkLoggedIn, async (req, res) => {
+routes.put('/:id', async (req, res) => {
     const event = req.body;
     const id = req.params.id;
 
     try {
         const eventBefore = await Event.findById(id);
-        const userId = req.user._id;
+        const userId = req.uer.sub;
         if (eventBefore.user != userId) {
             return res.status(403).send({
                 msg: 'Unauthorized'
@@ -67,12 +76,42 @@ routes.put('/:id', checkLoggedIn, async (req, res) => {
     }
 });
 
-routes.delete('/:id', checkLoggedIn, async (req, res) => {
+routes.post('/:id/rsvp', async (req, res) => {
+    const { name, email } = req.body;
+    if (!name || !email) {
+        return res.status(400).send({
+            msg: 'Invalid request. Email and Name are required'
+        });
+    }
+
+    try {
+        const eventId = req.params.id;
+        const eventBefore = await Event.findById(eventId);
+        const newAttendee = { name, email };
+        eventBefore.attendees.push(newAttendee);
+        console.log(eventBefore);
+        const updatedEvent = await Event.findByIdAndUpdate(
+            eventId,
+            eventBefore,
+            {
+                new: true
+            }
+        );
+        return res.send(updatedEvent);
+    } catch (err) {
+        console.log(err);
+        return res.status(400).send({
+            msg: 'Failed to update event'
+        });
+    }
+});
+
+routes.delete('/:id', async (req, res) => {
     const id = req.params.id;
 
     try {
         const event = await Event.findById(id);
-        const userId = req.user._id;
+        const userId = req.uer.sub;
         if (event.user != userId) {
             return res.status(403).send({ msg: 'Unauthorized' });
         }

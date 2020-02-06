@@ -1,8 +1,10 @@
 const express = require('express');
 const app = express();
+require('./models/Event');
 require('dotenv').config();
 
-app.use(express.json());
+app.use(express.json()); // for parsing application/json
+app.use(express.urlencoded({ extended: true }));
 
 const mongoose = require('mongoose');
 mongoose.set('useFindAndModify', false);
@@ -12,18 +14,17 @@ mongoose.set('useUnifiedTopology', true);
 mongoose.connect(
     process.env.DB_CONNECTION_STRING,
     { useNewUrlParser: true },
-    () => {
-        console.group('DB is connected');
+    (err) => {
+        if (err) {
+            console.log(err);
+        } else {
+            console.group('DB is connected');
+        }
     }
 );
 
-require('./models/Event');
-require('./models/User');
-
 const eventRoutes = require('./routes/EventRoutes');
-const userRoutes = require('./routes/UserRoutes');
 app.use('/api/events', eventRoutes);
-app.use('/api/user', userRoutes);
 
 const port = process.env.port || 3500;
 
