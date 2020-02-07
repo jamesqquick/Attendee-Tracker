@@ -58,7 +58,7 @@ routes.put('/:id', async (req, res) => {
 
     try {
         const eventBefore = await Event.findById(id);
-        const userId = req.uer.sub;
+        const userId = req.user.sub;
         if (eventBefore.user != userId) {
             return res.status(403).send({
                 msg: 'Unauthorized'
@@ -89,7 +89,50 @@ routes.post('/:id/rsvp', async (req, res) => {
         const eventBefore = await Event.findById(eventId);
         const newAttendee = { name, email };
         eventBefore.attendees.push(newAttendee);
-        console.log(eventBefore);
+        const updatedEvent = await Event.findByIdAndUpdate(
+            eventId,
+            eventBefore,
+            {
+                new: true
+            }
+        );
+        return res.send(updatedEvent);
+    } catch (err) {
+        console.log(err);
+        return res.status(400).send({
+            msg: 'Failed to update event'
+        });
+    }
+});
+
+routes.post('/:id/rsvp/:userId', checkJwt, async (req, res) => {
+    const { name, email } = req.body;
+    const userId = req.params.userId;
+    console.log(req.params.userId);
+    const loggedInUserId = req.user.sub;
+
+    if (!name || !email) {
+        return res.status(400).send({
+            msg: 'Invalid request. Email and Name are required'
+        });
+    }
+
+    if (loggedInUserId !== userId) {
+        console.error(
+            `Unauthorized user: ${loggedInUserId} trying to update for ${userId}`
+        );
+        return res.status(401).send({
+            msg: 'Unauthorized'
+        });
+    }
+
+    try {
+        const eventId = req.params.id;
+        const eventBefore = await Event.findById(eventId);
+        const newAttendee = { name, email, _id: loggedInUserId };
+        console.log(newAttendee);
+        eventBefore.attendees.push(newAttendee);
+        console.log(eventBefore.attendees);
         const updatedEvent = await Event.findByIdAndUpdate(
             eventId,
             eventBefore,
