@@ -2,16 +2,10 @@ const routes = require('express').Router();
 const mongoose = require('mongoose');
 const Event = mongoose.model('Event');
 const { checkJwt } = require('../middleware/auth');
-
+const testData = require('../testData');
 routes.post('/', checkJwt, async (req, res) => {
-    //console.log(req.user);
     const user = req.user.sub;
-    console.log(req.body);
-    //console.log(res.json(req.body));
-
-    const body = req.body;
     const event = new Event({ ...req.body, user });
-    console.log(event);
     try {
         await event.save();
         return res.send(event);
@@ -24,7 +18,9 @@ routes.post('/', checkJwt, async (req, res) => {
 routes.get('/', async (req, res) => {
     //TODO: search based on user query in query param
     try {
-        const events = await Event.find(); //TODO: limit to 20
+        const events = await Event.find()
+            .sort({ date: -1 })
+            .limit(10); //TODO: limit to 20
         return res.send(events);
     } catch (err) {
         console.error(err);
@@ -106,7 +102,9 @@ routes.post('/:id/rsvp', async (req, res) => {
 });
 
 routes.post('/:id/rsvp/:userId', checkJwt, async (req, res) => {
-    const { name, email } = req.body;
+    const isGoing = req.query.going;
+    console.log('Is going: ', isGoing);
+    const { name, email, picture } = req.body;
     const userId = req.params.userId;
     console.log(req.params.userId);
     const loggedInUserId = req.user.sub;
@@ -129,10 +127,18 @@ routes.post('/:id/rsvp/:userId', checkJwt, async (req, res) => {
     try {
         const eventId = req.params.id;
         const eventBefore = await Event.findById(eventId);
-        const newAttendee = { name, email, _id: loggedInUserId };
-        console.log(newAttendee);
-        eventBefore.attendees.push(newAttendee);
-        console.log(eventBefore.attendees);
+        const newAttendee = { name, email, _id: loggedInUserId, picture };
+        if (isGoing === 'true') {
+            eventBefore.attendees.push(newAttendee);
+        } else {
+            for (let i = 0; i < eventBefore.attendees.length; i++) {
+                const registeredAttendee = eventBefore.attendees[i];
+                if (registeredAttendee._id === loggedInUserId) {
+                    eventBefore.attendees.splice(i, 1);
+                    break;
+                }
+            }
+        }
         const updatedEvent = await Event.findByIdAndUpdate(
             eventId,
             eventBefore,
@@ -163,6 +169,24 @@ routes.delete('/:id', async (req, res) => {
         return res.send(deletedEvent);
     } catch (err) {
         return res.status(400).send({ msg: 'Failed to delete event' });
+    }
+});
+
+routes.post('/seed', async (req, res) => {
+    console.log(testData);
+    try {
+        await Event.deleteMany({});
+
+        for (let i = 0; i < testData.length; i++) {
+            const testEvent = new Event(testData[i]);
+            await testEvent.save();
+        }
+        return res.send({ msg: 'Successfully seeded' });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).send({
+            msg: 'Failed to seed db'
+        });
     }
 });
 

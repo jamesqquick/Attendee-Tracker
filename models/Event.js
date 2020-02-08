@@ -17,16 +17,16 @@ const eventSchema = new mongoose.Schema({
         required: true
     },
     user: {
-        //not required since we will let guests register also
         type: String,
-        required: false
+        required: true
     },
     attendees: {
         type: [
             {
                 name: String,
                 email: String,
-                _id: { type: String, required: false }
+                _id: { type: String, required: false },
+                picture: String
             }
         ]
     }
